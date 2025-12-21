@@ -1,0 +1,278 @@
+/* RESET */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* ROOT THEME */
+:root {
+    --bg-color: #ffffff;
+    --text-primary: #111111;
+    --text-secondary: #555555;
+    --accent-color: #000000;
+    --border-radius: 12px;
+    --transition-speed: 0.4s;
+    --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    font-family: var(--font-main);
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    height: 100vh;
+}
+
+/* APP CONTAINER */
+.app-container {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* SCREENS */
+.screen {
+    position: absolute;
+    width: 100%;
+    max-width: 420px;
+    padding: 24px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+    transition:
+        opacity var(--transition-speed) ease,
+        transform var(--transition-speed) ease;
+}
+
+.screen.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+/* CONTENT */
+.content {
+    text-align: center;
+}
+
+/* HEADINGS */
+h1 {
+    font-size: 2.4rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+h2 {
+    font-size: 1.8rem;
+    font-weight: 500;
+    margin-bottom: 12px;
+}
+
+/* TEXT */
+p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+}
+
+/* INPUT */
+input[type="text"] {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 1rem;
+    border-radius: var(--border-radius);
+    border: 1px solid #ddd;
+    margin-bottom: 24px;
+    outline: none;
+}
+
+input[type="text"]:focus {
+    border-color: #000;
+}
+
+/* BUTTON */
+.primary-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 1rem;
+    border-radius: var(--border-radius);
+    border: none;
+    background-color: var(--accent-color);
+    color: #fff;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.primary-btn:hover {
+    opacity: 0.9;
+}
+
+/* NUMBER INPUT – PEOPLE COUNT */
+/* NUMBER INPUT – REFINED */
+input[type="number"] {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+
+    border-radius: var(--border-radius);
+    border: 1px solid #ddd;
+    outline: none;
+
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"]:focus {
+    border-color: #000;
+}
+
+
+#people-count-screen h2 {
+    margin-bottom: 8px;
+}
+
+#people-count-screen p {
+    margin-bottom: 28px;
+}
+
+#people-count-screen input {
+    margin-bottom: 24px;
+}
+
+
+/* PEOPLE NAMES LIST */
+#people-names-container {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 28px;
+}
+
+#people-names-container input {
+    text-align: left;
+}
+
+/* EXPENSE FORM */
+.expense-form {
+    margin-bottom: 32px;
+}
+
+.expense-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.people-select {
+    text-align: left;
+    margin-bottom: 24px;
+}
+
+.people-select label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+}
+
+/* EXPENSE LIST */
+.expense-list {
+    text-align: left;
+    margin-bottom: 32px;
+}
+
+.expense-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 0.95rem;
+}
+
+/* SECONDARY BUTTON */
+.secondary {
+    background-color: #f2f2f2;
+    color: #000;
+}
+
+
+/* RESULTS */
+.result-person {
+    border-bottom: 1px solid #eee;
+    padding: 16px 0;
+    text-align: left;
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.result-amount {
+    font-weight: 600;
+}
+
+.result-details {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: #555;
+    display: none;
+}
+
+.result-details div {
+    margin-bottom: 6px;
+}
+
+/* MOBILE RESPONSIVENESS */
+@media (max-width: 480px) {
+    .app-container {
+        align-items: flex-start;
+        padding-top: 40px;
+    }
+
+    .screen {
+        padding: 16px;
+    }
+
+    h1 {
+        font-size: 1.9rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    p {
+        font-size: 0.95rem;
+    }
+
+    .expense-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .primary-btn {
+        padding: 16px;
+        font-size: 1.05rem;
+    }
+
+    input {
+        font-size: 1rem;
+        padding: 14px;
+    }
+
+    .result-header {
+        font-size: 0.95rem;
+    }
+}

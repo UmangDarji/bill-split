@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Split — Simple Group Expense Calculator</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+    <main class="app-container">
+
+        <!-- LANDING SCREEN -->
+        <section id="landing-screen" class="screen active">
+            <div class="content">
+                <h1>Split expenses.<br />Without the chaos.</h1>
+                <p>
+                    A simple way to divide group expenses fairly and transparently.
+                </p>
+                <button id="get-started-btn" class="primary-btn">
+                    Get Started
+                </button>
+            </div>
+        </section>
+
+        <!-- GROUP NAME SCREEN -->
+        <section id="group-name-screen" class="screen">
+            <div class="content">
+                <h2>Name your group</h2>
+                <p>This helps you identify the split.</p>
+
+                <input type="text" id="group-name-input" placeholder="e.g. Goa Trip, Flatmates" autocomplete="off" />
+
+                <button id="group-name-continue" class="primary-btn">
+                    Continue
+                </button>
+            </div>
+        </section>
+
+        <!-- PEOPLE COUNT SCREEN -->
+        <section id="people-count-screen" class="screen">
+            <div class="content">
+                <h2>How many people?</h2>
+                <p>Enter the number of people splitting the expenses.</p>
+
+                <input type="number" id="people-count-input" placeholder="e.g. 4" min="1" max="20" />
+
+                <button id="people-count-continue" class="primary-btn">
+                    Continue
+                </button>
+            </div>
+        </section>
+
+
+        <!-- PEOPLE NAMES SCREEN -->
+        <section id="people-names-screen" class="screen">
+            <div class="content">
+                <h2>Who’s in the group?</h2>
+                <p>Enter the name of each person.</p>
+
+                <div id="people-names-container"></div>
+
+                <button id="people-names-continue" class="primary-btn">
+                    Continue
+                </button>
+            </div>
+        </section>
+
+        <!-- EXPENSE ENTRY SCREEN -->
+        <section id="expense-screen" class="screen">
+            <div class="content">
+                <h2>Add expenses</h2>
+                <p>Enter each item and select who shared it.</p>
+
+                <div class="expense-form">
+                    <input type="text" id="item-name" placeholder="Item name" />
+
+                    <div class="expense-row">
+                        <input type="number" id="item-price" placeholder="Price per unit" min="0" />
+                        <input type="number" id="item-qty" placeholder="Qty" min="1" value="1" />
+                    </div>
+
+                    <div id="people-checkboxes" class="people-select"></div>
+
+                    <button id="add-expense-btn" class="primary-btn">
+                        Add item
+                    </button>
+                </div>
+
+                <div id="expense-list" class="expense-list"></div>
+
+                <button id="calculate-btn" class="primary-btn secondary">
+                    Calculate
+                </button>
+            </div>
+        </section>
+
+        <!-- RESULT SCREEN -->
+        <section id="result-screen" class="screen">
+            <div class="content">
+                <h2>Split summary</h2>
+                <p>Here’s how the expenses are divided.</p>
+
+                <div id="result-list"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
