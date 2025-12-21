@@ -78,7 +78,7 @@
                     <input type="text" id="item-name" placeholder="Item name" />
 
                     <div class="expense-row">
-                        <input type="number" id="item-price" placeholder="Price per unit" min="0" />
+                        <input type="number" id="item-price" placeholder="Price per item" min="0" />
                         <input type="number" id="item-qty" placeholder="Qty" min="1" />
                     </div>
 
@@ -104,6 +104,15 @@
                 <p>Here’s how the expenses are divided.</p>
 
                 <div id="result-list"></div>
+                <div class="share-actions">
+                    <button id="copy-btn" class="primary-btn secondary">
+                        Copy To Clipboard
+                    </button>
+
+                    <button id="share-btn" class="primary-btn">
+                        Share
+                    </button>
+                </div>
             </div>
         </section>
 

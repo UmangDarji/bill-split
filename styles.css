@@ -276,3 +276,26 @@ input[type="number"]:focus {
         font-size: 0.95rem;
     }
 }
+
+#share-btn {
+    margin-top: 24px;
+}
+
+#copy-btn {
+    margin-top: 24px;
+}
+
+.share-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.share-actions .primary-btn {
+    flex: 1;
+}
+
+.secondary {
+    background-color: #f2f2f2;
+    color: #000;
+}

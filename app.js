@@ -74,6 +74,9 @@ const resultScreen = document.getElementById("result-screen");
 const resultList = document.getElementById("result-list");
 
 
+const copyBtn = document.getElementById("copy-btn");
+const shareBtn = document.getElementById("share-btn");
+
 getStartedBtn.addEventListener("click", () => {
     showScreen(groupNameScreen);
     groupNameInput.focus();
@@ -320,3 +323,56 @@ calculateBtn.addEventListener("click", () => {
     renderResults(result);
     showScreen(resultScreen);
 });
+
+function formatShareText(result) {
+    let text = `${appState.groupName} - Expense Split\n\n`;
+    let total = "Total: ₹"
+    let totalAmount = 0
+    let itemText = ""
+    Object.entries(result).forEach(([name, data]) => {
+        text += `${name}: ₹${(data.total / 100).toFixed(2)}\n`;
+        totalAmount += data.total;
+        data.items.forEach(item => {
+            text += `  • ${item.item}: ₹${(item.amount / 100).toFixed(2)}\n`;
+            itemText += `  • ${item.item}: ₹${(data.total / 100).toFixed(2)}\n`;
+        });
+
+        text += "\n";
+    });
+
+    return text.trim();
+}
+
+copyBtn.addEventListener("click", async () => {
+    try {
+        const result = calculateSplit();
+        const text = formatShareText(result);
+
+        await navigator.clipboard.writeText(text);
+        alert("Split copied to clipboard.");
+    } catch (err) {
+        logger.error("Copy failed:", err);
+        alert("Unable to copy. Please try again.");
+    }
+});
+
+shareBtn.addEventListener("click", async () => {
+    const result = calculateSplit();
+    const shareText = formatShareText(result);
+
+    try {
+        if (navigator.share) {
+            await navigator.share({
+                title: "Expense Split",
+                text: shareText
+            });
+        } else {
+            await navigator.clipboard.writeText(shareText);
+            alert("Split copied to clipboard.");
+        }
+    } catch (err) {
+        logger.error("Share failed:", err);
+        alert("Unable to share. Please try again.");
+    }
+});
+
