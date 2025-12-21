@@ -1,4 +1,5 @@
 /* GLOBAL APP STATE */
+
 const appState = {
     groupName: "",
     peopleCount: 0,
@@ -20,8 +21,9 @@ const logger = {
     }
 };
 
-
 function handleEnter(input, callback) {
+    if (!input) return;
+
     input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -30,6 +32,14 @@ function handleEnter(input, callback) {
     });
 }
 
+
+/* SCREEN TRANSITION HELPER */
+function showScreen(screenToShow) {
+    document.querySelectorAll(".screen").forEach(screen => {
+        screen.classList.remove("active");
+    });
+    screenToShow.classList.add("active");
+}
 
 /* ELEMENT REFERENCES */
 const landingScreen = document.getElementById("landing-screen");
@@ -64,20 +74,12 @@ const resultScreen = document.getElementById("result-screen");
 const resultList = document.getElementById("result-list");
 
 
-/* SCREEN TRANSITION HELPER */
-function showScreen(screenToShow) {
-    document.querySelectorAll(".screen").forEach(screen => {
-        screen.classList.remove("active");
-    });
-
-    screenToShow.classList.add("active");
-}
-
-/* EVENTS */
 getStartedBtn.addEventListener("click", () => {
     showScreen(groupNameScreen);
     groupNameInput.focus();
 });
+
+handleEnter(groupNameInput, () => groupNameContinueBtn.click());
 
 groupNameContinueBtn.addEventListener("click", () => {
     const value = groupNameInput.value.trim();
@@ -93,22 +95,25 @@ groupNameContinueBtn.addEventListener("click", () => {
     peopleCountInput.focus();
 });
 
+//GROUP NAME → PEOPLE COUNT
+handleEnter(peopleCountInput, () => peopleCountContinueBtn.click());
+
 peopleCountContinueBtn.addEventListener("click", () => {
     const count = Number(peopleCountInput.value);
-
     if (!count || count < 1) {
         alert("Please enter a valid number of people.");
         return;
     }
 
     appState.peopleCount = count;
+    generatePeopleInputs(count);
 
     logger.log("Current App State:", appState);
-    generatePeopleInputs(count);
     showScreen(peopleNamesScreen);
 });
 
 
+//Function for People Names
 function generatePeopleInputs(count) {
     peopleNamesContainer.innerHTML = "";
 
@@ -116,15 +121,11 @@ function generatePeopleInputs(count) {
         const input = document.createElement("input");
         input.type = "text";
         input.placeholder = `Person ${i + 1}`;
-        input.dataset.index = i;
-
         peopleNamesContainer.appendChild(input);
     }
 
-    const firstInput = peopleNamesContainer.querySelector("input");
-    if (firstInput) firstInput.focus();
-
     const inputs = peopleNamesContainer.querySelectorAll("input");
+    if (inputs[0]) inputs[0].focus();
 
     inputs.forEach((input, index) => {
         handleEnter(input, () => {
@@ -160,28 +161,38 @@ peopleNamesContinueBtn.addEventListener("click", () => {
     }
 
     appState.people = names;
+    renderPeopleCheckboxes();
 
     logger.log("Current App State:", appState);
-    renderPeopleCheckboxes();
     showScreen(expenseScreen);
 });
 
+
+// Function for Expense Entry
 function renderPeopleCheckboxes() {
     peopleCheckboxes.innerHTML = "";
 
     appState.people.forEach((name, index) => {
         const label = document.createElement("label");
-
         const checkbox = document.createElement("input");
+
         checkbox.type = "checkbox";
         checkbox.value = index;
 
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(name));
-
         peopleCheckboxes.appendChild(label);
     });
 }
+
+function resetExpenseForm() {
+    itemNameInput.value = "";
+    itemPriceInput.value = "";
+    itemQtyInput.value = "";
+    peopleCheckboxes.querySelectorAll("input").forEach(cb => (cb.checked = false));
+}
+
+handleEnter(itemQtyInput, () => addExpenseBtn.click());
 
 addExpenseBtn.addEventListener("click", () => {
     const name = itemNameInput.value.trim();
@@ -197,53 +208,19 @@ addExpenseBtn.addEventListener("click", () => {
         return;
     }
 
-    const expense = {
+    appState.expenses.push({
         name,
         price,
         qty,
         people: selectedPeople
-    };
+    });
 
-    appState.expenses.push(expense);
+    logger.log("Expenses:", appState.expenses);
     renderExpenseList();
-
-    itemNameInput.value = "";
-    itemPriceInput.value = "";
-    itemQtyInput.value = 1;
-    peopleCheckboxes.querySelectorAll("input").forEach(cb => cb.checked = false);
+    resetExpenseForm();
 });
 
-
-addExpenseBtn.addEventListener("click", () => {
-    const name = itemNameInput.value.trim();
-    const price = Number(itemPriceInput.value);
-    const qty = Number(itemQtyInput.value);
-
-    const selectedPeople = Array.from(
-        peopleCheckboxes.querySelectorAll("input:checked")
-    ).map(cb => Number(cb.value));
-
-    if (!price || !qty || selectedPeople.length === 0) {
-        alert("Please fill all fields and select people.");
-        return;
-    }
-
-    const expense = {
-        name,
-        price,
-        qty,
-        people: selectedPeople
-    };
-
-    appState.expenses.push(expense);
-    renderExpenseList();
-
-    itemNameInput.value = "";
-    itemPriceInput.value = "";
-    itemQtyInput.value = 1;
-    peopleCheckboxes.querySelectorAll("input").forEach(cb => cb.checked = false);
-});
-
+// Expense List Functions
 function renderExpenseList() {
     expenseList.innerHTML = "";
 
@@ -252,31 +229,32 @@ function renderExpenseList() {
         div.className = "expense-item";
 
         const peopleNames = exp.people.map(i => appState.people[i]).join(", ");
-
         div.textContent = `${exp.name} — ₹${exp.price} × ${exp.qty} (${peopleNames})`;
 
         expenseList.appendChild(div);
     });
 }
 
-
+// Calculation Logic 
 function calculateSplit() {
     const result = {};
 
     appState.people.forEach(name => {
-        result[name] = {
-            total: 0,
-            items: []
-        };
+        result[name] = { total: 0, items: [] };
     });
 
-    appState.expenses.forEach(exp => {
-        const totalCost = exp.price * exp.qty;
-        const perPerson = totalCost / exp.people.length;
+    result["Total"] = { total: 0, items: [] };
 
+    appState.expenses.forEach(exp => {
+        const totalCost = Math.round(exp.price * 100) * exp.qty;
+        const perPerson = totalCost / exp.people.length;
+        result["Total"].total += totalCost;
+        result["Total"].items.push({
+            item: exp.name,
+            amount: totalCost
+        })
         exp.people.forEach(personIndex => {
             const personName = appState.people[personIndex];
-
             result[personName].total += perPerson;
             result[personName].items.push({
                 item: exp.name,
@@ -288,6 +266,8 @@ function calculateSplit() {
     return result;
 }
 
+
+// Result Functions
 function renderResults(result) {
     resultList.innerHTML = "";
 
@@ -303,7 +283,7 @@ function renderResults(result) {
 
         const amount = document.createElement("span");
         amount.className = "result-amount";
-        amount.textContent = `₹${data.total.toFixed(2)}`;
+        amount.textContent = `₹${(data.total / 100).toFixed(2)}`;
 
         header.appendChild(title);
         header.appendChild(amount);
@@ -313,13 +293,13 @@ function renderResults(result) {
 
         data.items.forEach(item => {
             const row = document.createElement("div");
-            row.textContent = `${item.item} — ₹${item.amount.toFixed(2)}`;
+            row.textContent = `${item.item} — ₹${(item.amount / 100).toFixed(2)}`;
             details.appendChild(row);
         });
 
         header.addEventListener("click", () => {
             details.style.display =
-                details.style.display === "none" ? "block" : "none";
+                details.style.display === "block" ? "none" : "block";
         });
 
         container.appendChild(header);
@@ -335,21 +315,8 @@ calculateBtn.addEventListener("click", () => {
     }
 
     const result = calculateSplit();
-    logger.log("Split JSON Output:", result);
+    logger.log("Split Result:", result);
 
     renderResults(result);
     showScreen(resultScreen);
-});
-
-
-handleEnter(groupNameInput, () => {
-    groupNameContinueBtn.click();
-});
-
-handleEnter(peopleCountInput, () => {
-    peopleCountContinueBtn.click();
-});
-
-handleEnter(itemQtyInput, () => {
-    addExpenseBtn.click();
 });
