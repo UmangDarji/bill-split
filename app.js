@@ -6,6 +6,21 @@ const appState = {
     expenses: []
 };
 
+const isDev = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+
+const logger = {
+    log: (...args) => {
+        if (isDev) console.log(...args);
+    },
+    warn: (...args) => {
+        if (isDev) console.warn(...args);
+    },
+    error: (...args) => {
+        if (isDev) console.error(...args);
+    }
+};
+
+
 function handleEnter(input, callback) {
     input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
@@ -73,7 +88,7 @@ groupNameContinueBtn.addEventListener("click", () => {
     }
 
     appState.groupName = value;
-    console.log("Current App State:", appState);
+    logger.log("Current App State:", appState);
     showScreen(peopleCountScreen);
     peopleCountInput.focus();
 });
@@ -88,7 +103,7 @@ peopleCountContinueBtn.addEventListener("click", () => {
 
     appState.peopleCount = count;
 
-    console.log("Current App State:", appState);
+    logger.log("Current App State:", appState);
     generatePeopleInputs(count);
     showScreen(peopleNamesScreen);
 });
@@ -146,7 +161,7 @@ peopleNamesContinueBtn.addEventListener("click", () => {
 
     appState.people = names;
 
-    console.log("Current App State:", appState);
+    logger.log("Current App State:", appState);
     renderPeopleCheckboxes();
     showScreen(expenseScreen);
 });
@@ -208,7 +223,7 @@ addExpenseBtn.addEventListener("click", () => {
         peopleCheckboxes.querySelectorAll("input:checked")
     ).map(cb => Number(cb.value));
 
-    if (!name || !price || !qty || selectedPeople.length === 0) {
+    if (!price || !qty || selectedPeople.length === 0) {
         alert("Please fill all fields and select people.");
         return;
     }
@@ -320,7 +335,7 @@ calculateBtn.addEventListener("click", () => {
     }
 
     const result = calculateSplit();
-    console.log("Split JSON Output:", result);
+    logger.log("Split JSON Output:", result);
 
     renderResults(result);
     showScreen(resultScreen);
