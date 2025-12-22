@@ -49,6 +49,10 @@ const getStartedBtn = document.getElementById("get-started-btn");
 const groupNameInput = document.getElementById("group-name-input");
 const groupNameContinueBtn = document.getElementById("group-name-continue");
 
+const upiIdScreen = document.getElementById("upi-selection-screen");
+const upiIdInput = document.getElementById("upi-id-input");
+const upiIdButton = document.getElementById("upi-id-continue");
+
 const peopleCountScreen = document.getElementById("people-count-screen");
 const peopleCountInput = document.getElementById("people-count-input");
 const peopleCountContinueBtn = document.getElementById("people-count-continue");
@@ -94,11 +98,27 @@ groupNameContinueBtn.addEventListener("click", () => {
 
     appState.groupName = value;
     logger.log("Current App State:", appState);
-    showScreen(peopleCountScreen);
-    peopleCountInput.focus();
+    showScreen(upiIdScreen);
+    upiIdInput.focus();
 });
 
-//GROUP NAME → PEOPLE COUNT
+//GROUP NAME -> UPI ID SELECTION
+handleEnter(upiIdInput, () => upiIdButton.click())
+
+upiIdButton.addEventListener("click", () => {
+    const value = upiIdInput.value.trim();
+
+    if (!value) {
+        alert("Please enter a group name.");
+        return;
+    }
+    appState.upiID = value;
+    logger.log("Current App State:", appState);
+    showScreen(peopleCountScreen);
+    peopleCountInput.focus();
+})
+
+//UPI ID SELECTION -> PEOPLE COUNT
 handleEnter(peopleCountInput, () => peopleCountContinueBtn.click());
 
 peopleCountContinueBtn.addEventListener("click", () => {
@@ -288,8 +308,15 @@ function renderResults(result) {
         amount.className = "result-amount";
         amount.textContent = `₹${(data.total / 100).toFixed(2)}`;
 
+        const upiLink = document.createElement("a");
+        upiLink.href = `upi://pay?pa=${appState.upiID}&am=${(data.total / 100).toFixed(2)}&cu=INR`
+        upiLink.textContent = "Pay Now";
+
         header.appendChild(title);
         header.appendChild(amount);
+        if (name !== "Total") {
+            header.appendChild(upiLink);
+        }
 
         const details = document.createElement("div");
         details.className = "result-details";
