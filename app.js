@@ -53,6 +53,16 @@ function showToast(message, duration = 2000) {
     }, duration);
 }
 
+function isAndroid() {
+    return /Android/i.test(navigator.userAgent);
+}
+
+function triggerHaptic() {
+    if (navigator.vibrate) {
+        navigator.vibrate(15);
+    }
+}
+
 
 /* ELEMENT REFERENCES */
 const landingScreen = document.getElementById("landing-screen");
@@ -304,6 +314,13 @@ function calculateSplit() {
     return result;
 }
 
+const UPI_APPS = {
+    DEFAULT: "upi://pay?",
+    GPAY: "tez://upi/pay?",
+    PHONEPE: "phonepe://pay?",
+    PAYTM: "paytmmp://pay?"
+};
+
 
 // Result Functions
 function renderResults(result) {
@@ -312,6 +329,7 @@ function renderResults(result) {
     Object.entries(result).forEach(([name, data]) => {
         const container = document.createElement("div");
         container.className = "result-person";
+        container.style.position = "relative";
 
         const header = document.createElement("div");
         header.className = "result-header";
@@ -319,19 +337,76 @@ function renderResults(result) {
         const title = document.createElement("span");
         title.textContent = name;
 
+        const amountValue = (data.total / 100).toFixed(2);
         const amount = document.createElement("span");
         amount.className = "result-amount";
-        amount.textContent = `₹${(data.total / 100).toFixed(2)}`;
+        amount.textContent = `₹${amountValue}`;
 
-        const upiLink = document.createElement("a");
-        upiLink.href = `upi://pay?pa=${appState.upiID}&am=${(data.total / 100).toFixed(2)}&cu=INR`
-        upiLink.textContent = "Pay Now";
+        const actions = document.createElement("div");
+        actions.className = "result-actions";
+
+        actions.appendChild(amount);
+
+        if (name !== "Total") {
+            const payToggle = document.createElement("button");
+            payToggle.className = "pay-toggle";
+            payToggle.textContent = "Pay";
+
+            const popover = document.createElement("div");
+            popover.className = "pay-popover hidden";
+
+            const apps = [
+                { key: "GPAY", label: "GPay" },
+                { key: "PHONEPE", label: "PhonePe" },
+                { key: "PAYTM", label: "Paytm" },
+                { key: "DEFAULT", label: "Other UPI" }
+            ];
+
+            apps.forEach(app => {
+                const btn = document.createElement("button");
+                btn.className = "pay-option-btn";
+                btn.textContent = app.label;
+
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    triggerHaptic();
+                    openPaymentApp(app.key, amountValue);
+                    popover.classList.add("hidden");
+                });
+
+                popover.appendChild(btn);
+            });
+
+            if (isAndroid()) {
+                payToggle.addEventListener("click", () => {
+                    triggerHaptic();
+                    openPaymentApp("DEFAULT", amountValue);
+                });
+            } else {
+                payToggle.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    popover.classList.toggle("hidden");
+                });
+            }
+
+            if (Number(amountValue) === 0) {
+                payToggle.classList.add("disabled");
+            }
+
+            actions.appendChild(payToggle);
+            actions.appendChild(popover);
+
+            // Close on outside click
+            document.addEventListener("click", () => {
+                popover.classList.add("hidden");
+            });
+
+            actions.addEventListener("click", e => e.stopPropagation());
+        }
 
         header.appendChild(title);
-        header.appendChild(amount);
-        if (name !== "Total") {
-            header.appendChild(upiLink);
-        }
+        header.appendChild(actions);
+        container.appendChild(header);
 
         const details = document.createElement("div");
         details.className = "result-details";
@@ -347,7 +422,6 @@ function renderResults(result) {
                 details.style.display === "block" ? "none" : "block";
         });
 
-        container.appendChild(header);
         container.appendChild(details);
         resultList.appendChild(container);
     });
@@ -412,6 +486,16 @@ shareBtn.addEventListener("click", async () => {
         showToast("Unable to generate link");
     }
 });
+
+function openPaymentApp(app, amount) {
+    const baseURL = UPI_APPS[app] || UPI_APPS.DEFAULT;
+    const finalURL = baseURL + `pa=${appState.upiID}&pn=%20&tr=%20&am=${amount}&cu=INR`;
+
+    logger.log("Opening UPI URL:", finalURL);
+
+    window.location.href = finalURL;
+}
+
 
 function encodeStateForURL() {
     const shareState = {
