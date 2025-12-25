@@ -41,6 +41,18 @@ function showScreen(screenToShow) {
     screenToShow.classList.add("active");
 }
 
+const toastEl = document.getElementById("toast");
+
+function showToast(message, duration = 2000) {
+    toastEl.textContent = message;
+    toastEl.classList.add("show");
+
+    setTimeout(() => {
+        toastEl.classList.remove("show");
+    }, duration);
+}
+
+
 /* ELEMENT REFERENCES */
 const landingScreen = document.getElementById("landing-screen");
 const groupNameScreen = document.getElementById("group-name-screen");
@@ -92,7 +104,7 @@ groupNameContinueBtn.addEventListener("click", () => {
     const value = groupNameInput.value.trim();
 
     if (!value) {
-        alert("Please enter a group name.");
+        showToast("Please enter a group name.");
         return;
     }
 
@@ -109,7 +121,7 @@ upiIdButton.addEventListener("click", () => {
     const value = upiIdInput.value.trim();
 
     if (!value) {
-        alert("Please enter a group name.");
+        showToast("Please enter a group name.");
         return;
     }
     appState.upiID = value;
@@ -124,7 +136,7 @@ handleEnter(peopleCountInput, () => peopleCountContinueBtn.click());
 peopleCountContinueBtn.addEventListener("click", () => {
     const count = Number(peopleCountInput.value);
     if (!count || count < 1) {
-        alert("Please enter a valid number of people.");
+        showToast("Please enter a valid number of people.");
         return;
     }
 
@@ -169,13 +181,13 @@ peopleNamesContinueBtn.addEventListener("click", () => {
         const value = input.value.trim();
 
         if (!value) {
-            alert("Please enter all names.");
+            showToast("Please enter all names.");
             input.focus();
             return;
         }
 
         if (names.includes(value)) {
-            alert("Duplicate names are not allowed.");
+            showToast("Duplicate names are not allowed.");
             input.focus();
             return;
         }
@@ -227,7 +239,7 @@ addExpenseBtn.addEventListener("click", () => {
     ).map(cb => Number(cb.value));
 
     if (!name || !price || !qty || selectedPeople.length === 0) {
-        alert("Please fill all fields and select people.");
+        showToast("Please fill all fields and select people.");
         return;
     }
 
@@ -252,7 +264,7 @@ function renderExpenseList() {
         div.className = "expense-item";
 
         const peopleNames = exp.people.map(i => appState.people[i]).join(", ");
-        div.textContent = `${exp.name} — ₹${exp.price} × ${exp.qty} (${peopleNames})`;
+        div.textContent = `${exp.name} - ₹${exp.price} × ${exp.qty} (${peopleNames})`;
 
         expenseList.appendChild(div);
     });
@@ -323,7 +335,7 @@ function renderResults(result) {
 
         data.items.forEach(item => {
             const row = document.createElement("div");
-            row.textContent = `${item.item} — ₹${(item.amount / 100).toFixed(2)}`;
+            row.textContent = `${item.item} - ₹${(item.amount / 100).toFixed(2)}`;
             details.appendChild(row);
         });
 
@@ -340,7 +352,7 @@ function renderResults(result) {
 
 calculateBtn.addEventListener("click", () => {
     if (appState.expenses.length === 0) {
-        alert("Please add at least one expense.");
+        showToast("Please add at least one expense.");
         return;
     }
 
@@ -376,30 +388,66 @@ copyBtn.addEventListener("click", async () => {
         const text = formatShareText(result);
 
         await navigator.clipboard.writeText(text);
-        alert("Split copied to clipboard.");
+        showToast("Copied to clipboard.");
     } catch (err) {
         logger.error("Copy failed:", err);
-        alert("Unable to copy. Please try again.");
+        showToast("Unable to copy. Please try again.");
     }
 });
 
 shareBtn.addEventListener("click", async () => {
-    const result = calculateSplit();
-    const shareText = formatShareText(result);
-
     try {
-        if (navigator.share) {
-            await navigator.share({
-                title: "Expense Split",
-                text: shareText
-            });
-        } else {
-            await navigator.clipboard.writeText(shareText);
-            alert("Split copied to clipboard.");
-        }
+        const encoded = encodeStateForURL();
+        const shareURL = `${location.origin}${location.pathname}?data=${encoded}`;
+
+        await navigator.clipboard.writeText(shareURL);
+        showToast("Shareable link copied ✓");
     } catch (err) {
-        logger.error("Share failed:", err);
-        alert("Unable to share. Please try again.");
+        logger.error("Link generation failed", err);
+        showToast("Unable to generate link");
     }
 });
 
+function encodeStateForURL() {
+    const shareState = {
+        groupName: appState.groupName,
+        people: appState.people,
+        expenses: appState.expenses
+    };
+
+    const json = JSON.stringify(shareState);
+    return btoa(encodeURIComponent(json));
+}
+
+function decodeStateFromURL(encoded) {
+    try {
+        const json = decodeURIComponent(atob(encoded));
+        return JSON.parse(json);
+    } catch (e) {
+        logger.error("Invalid share data", e);
+        return null;
+    }
+}
+
+(function restoreFromShareLink() {
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get("data");
+
+    if (!encoded) return;
+
+    const restored = decodeStateFromURL(encoded);
+    if (!restored) return;
+
+    appState.groupName = restored.groupName;
+    appState.people = restored.people;
+    appState.expenses = restored.expenses;
+    appState.peopleCount = restored.people.length;
+
+    renderExpenseList();
+
+    const result = calculateSplit();
+    renderResults(result);
+    showScreen(resultScreen);
+
+    showToast("Loaded shared expense");
+})();
