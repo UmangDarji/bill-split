@@ -54,8 +54,11 @@ function showToast(message, duration = 2000) {
 }
 
 function isAndroid() {
-    return /Android/i.test(navigator.userAgent);
+    return (
+        navigator.userAgentData?.platform === "Android" || /Android/i.test(navigator.userAgent)
+    );
 }
+
 
 function triggerHaptic() {
     if (navigator.vibrate) {
@@ -344,7 +347,6 @@ function renderResults(result) {
 
         const actions = document.createElement("div");
         actions.className = "result-actions";
-
         actions.appendChild(amount);
 
         if (name !== "Total") {
@@ -352,56 +354,63 @@ function renderResults(result) {
             payToggle.className = "pay-toggle";
             payToggle.textContent = "Pay";
 
-            const popover = document.createElement("div");
-            popover.className = "pay-popover hidden";
-
-            const apps = [
-                { key: "GPAY", label: "GPay" },
-                { key: "PHONEPE", label: "PhonePe" },
-                { key: "PAYTM", label: "Paytm" },
-                { key: "DEFAULT", label: "Other UPI" }
-            ];
-
-            apps.forEach(app => {
-                const btn = document.createElement("button");
-                btn.className = "pay-option-btn";
-                btn.textContent = app.label;
-
-                btn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    triggerHaptic();
-                    openPaymentApp(app.key, amountValue);
-                    popover.classList.add("hidden");
-                });
-
-                popover.appendChild(btn);
-            });
-
-            if (isAndroid()) {
-                payToggle.addEventListener("click", () => {
-                    triggerHaptic();
-                    openPaymentApp("DEFAULT", amountValue);
-                });
-            } else {
-                payToggle.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    popover.classList.toggle("hidden");
-                });
-            }
-
+            // Disable PAY Button if zero
             if (Number(amountValue) === 0) {
                 payToggle.classList.add("disabled");
             }
 
+            // Clear any previous handlers
+            payToggle.onclick = null;
+
+            if (isAndroid()) {
+                payToggle.onclick = () => {
+                    triggerHaptic();
+                    openPaymentApp("DEFAULT", amountValue);
+                };
+            } else {
+                payToggle.classList.add("dropdown");
+
+                const popover = document.createElement("div");
+                popover.className = "pay-popover hidden";
+
+                const apps = [
+                    { key: "GPAY", label: "GPay" },
+                    { key: "PHONEPE", label: "PhonePe" },
+                    { key: "PAYTM", label: "Paytm" },
+                    { key: "DEFAULT", label: "Other UPI" }
+                ];
+
+                apps.forEach(app => {
+                    const btn = document.createElement("button");
+                    btn.className = "pay-option-btn";
+                    btn.textContent = app.label;
+
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        triggerHaptic();
+                        openPaymentApp(app.key, amountValue);
+                        popover.classList.add("hidden");
+                    };
+
+                    popover.appendChild(btn);
+                });
+
+                payToggle.onclick = (e) => {
+                    e.stopPropagation();
+                    popover.classList.toggle("hidden");
+                };
+
+                actions.appendChild(popover);
+
+                // Close popover on outside click
+                document.addEventListener("click", () => {
+                    popover.classList.add("hidden");
+                });
+
+                actions.addEventListener("click", e => e.stopPropagation());
+            }
+
             actions.appendChild(payToggle);
-            actions.appendChild(popover);
-
-            // Close on outside click
-            document.addEventListener("click", () => {
-                popover.classList.add("hidden");
-            });
-
-            actions.addEventListener("click", e => e.stopPropagation());
         }
 
         header.appendChild(title);
@@ -489,12 +498,29 @@ shareBtn.addEventListener("click", async () => {
 
 function openPaymentApp(app, amount) {
     const baseURL = UPI_APPS[app] || UPI_APPS.DEFAULT;
-    const finalURL = baseURL + `pa=${appState.upiID}&pn=%20&tr=%20&am=${amount}&cu=INR`;
+    const finalURL = baseURL + buildUPIPayload(amount);
 
     logger.log("Opening UPI URL:", finalURL);
 
     window.location.href = finalURL;
 }
+
+function buildUPIPayload(amount) {
+    const params = new URLSearchParams();
+
+    params.set("pa", appState.upiID);
+    params.set("am", String(amount));
+    params.set("cu", "INR");
+
+    if (appState.groupName) {
+        params.set("pn", appState.groupName.slice(0, 25));
+    }
+
+    params.set("tn", "Split payment");
+
+    return params.toString();
+}
+
 
 
 function encodeStateForURL() {

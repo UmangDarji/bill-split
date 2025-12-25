@@ -366,8 +366,8 @@ input[type="number"]:focus {
     transform: scale(0.97);
 }
 
-/* Chevron */
-.pay-toggle::after {
+/* Chevron only for dropdown pay */
+.pay-toggle.dropdown::after {
     content: "▾";
     font-size: 0.65rem;
 }
