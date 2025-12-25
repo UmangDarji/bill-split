@@ -4,7 +4,8 @@ const appState = {
     groupName: "",
     peopleCount: 0,
     people: [],
-    expenses: []
+    expenses: [],
+    isReadOnly: false
 };
 
 const isDev = location.hostname === "localhost" || location.hostname === "127.0.0.1";
@@ -230,6 +231,8 @@ function resetExpenseForm() {
 handleEnter(itemQtyInput, () => addExpenseBtn.click());
 
 addExpenseBtn.addEventListener("click", () => {
+    if (appState.isReadOnly) return;
+
     const name = itemNameInput.value.trim();
     const price = Number(itemPriceInput.value);
     const qty = Number(itemQtyInput.value);
@@ -351,6 +354,8 @@ function renderResults(result) {
 }
 
 calculateBtn.addEventListener("click", () => {
+    if (appState.isReadOnly) return;
+
     if (appState.expenses.length === 0) {
         showToast("Please add at least one expense.");
         return;
@@ -401,7 +406,7 @@ shareBtn.addEventListener("click", async () => {
         const shareURL = `${location.origin}${location.pathname}?data=${encoded}`;
 
         await navigator.clipboard.writeText(shareURL);
-        showToast("Shareable link copied ✓");
+        showToast("Shareable link copied");
     } catch (err) {
         logger.error("Link generation failed", err);
         showToast("Unable to generate link");
@@ -442,12 +447,26 @@ function decodeStateFromURL(encoded) {
     appState.people = restored.people;
     appState.expenses = restored.expenses;
     appState.peopleCount = restored.people.length;
-
-    renderExpenseList();
+    appState.isReadOnly = true;
 
     const result = calculateSplit();
     renderResults(result);
     showScreen(resultScreen);
 
-    showToast("Loaded shared expense");
+    applyReadOnlyMode();
+    showToast("Viewing shared expense (read-only)");
 })();
+
+function applyReadOnlyMode() {
+    if (!appState.isReadOnly) return;
+
+    // Hiding all editable screens
+    landingScreen.style.display = "none";
+    groupNameScreen.style.display = "none";
+    peopleCountScreen.style.display = "none";
+    peopleNamesScreen.style.display = "none";
+    expenseScreen.style.display = "none";
+
+    // Hiding calculate button (result already calculated)
+    calculateBtn.style.display = "none";
+}
